@@ -1,46 +1,96 @@
 import '../../../core/controllers/base_controller.dart';
-import '../../../core/utils/password_hasher.dart';
+import '../../../core/network/api_response.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/models/user.dart';
 import '../../auth/models/user_role.dart';
-import '../../auth/services/user_local_data_source.dart';
+import '../../projects/models/project.dart';
+import '../../projects/services/project_service.dart';
+import '../../tasks/models/task.dart';
+import '../../tasks/models/task_status.dart';
+import '../../tasks/services/task_service.dart';
 import '../models/dashboard_summary.dart';
 
-/// Backs the home / dashboard screen.
+/// Backs the dashboard: task counters, the projects the user can see and the
+/// tasks waiting on *this* user — which depends on their role:
 ///
-/// It exposes the signed-in user plus, for administrators, every registered
-/// account and the admin-only actions (create / delete). Standard users get an
-/// empty list, which the view renders as a restricted panel — the role-based UI
-/// split lives in the view, the *permission* enforcement lives here.
+/// * **Assignee** — their own tasks that still need work.
+/// * **Project Manager** — tasks in internal or client review.
+/// * **CEO** — tasks in final review, and done tasks waiting to be closed.
+/// * **Admin** — blocked and overdue tasks across the workspace.
 class HomeController extends BaseController {
-  HomeController({required this.authController, UserLocalDataSource? userStore})
-    : _userStore = userStore ?? UserLocalDataSource();
+  HomeController({
+    required this.authController,
+    required this._projectService,
+    required this._taskService,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now;
 
   /// Session controller backing this screen.
-  ///
-  /// Exposed so views can delegate session actions (e.g. sign out) without
-  /// keeping a second reference around.
   final AuthController authController;
 
-  final UserLocalDataSource _userStore;
+  final ProjectService _projectService;
+  final TaskService _taskService;
+  final DateTime Function() _clock;
 
-  List<User> _accounts = const <User>[];
-
-  /// Registered accounts. Empty for non-admin users.
-  List<User> get accounts => List<User>.unmodifiable(_accounts);
-
-  /// Dashboard counters derived from the loaded accounts.
-  DashboardSummary get summary => DashboardSummary.fromUsers(_accounts);
+  List<Project> _projects = const <Project>[];
+  List<Task> _tasks = const <Task>[];
 
   /// The signed-in user (delegated to [AuthController]).
   User? get currentUser => authController.currentUser;
 
-  /// Whether the signed-in user is an administrator.
-  bool get isAdmin => authController.isAdminUser;
+  /// Projects the user can see.
+  List<Project> get projects => List<Project>.unmodifiable(_projects);
 
-  /// Whether [userId] belongs to the signed-in user.
-  bool isCurrentUser(int? userId) =>
-      userId != null && userId == currentUser?.id;
+  /// Dashboard counters derived from the visible tasks.
+  DashboardSummary get summary => DashboardSummary.fromTasks(
+    _tasks,
+    userId: currentUser?.id,
+    now: _clock(),
+  );
+
+  /// What "needs your attention" means for the current role (for the UI).
+  String get attentionHint => switch (currentUser?.role) {
+    UserRole.admin => 'Blocked and overdue tasks across the workspace.',
+    UserRole.ceo => 'Tasks awaiting your final review or closing.',
+    UserRole.projectManager => 'Tasks awaiting your internal or client review.',
+    _ => 'Your tasks that still need work.',
+  };
+
+  /// Tasks waiting on the current user, soonest due first.
+  List<Task> get needsAttention {
+    final User? user = currentUser;
+    if (user == null) {
+      return const <Task>[];
+    }
+    final DateTime now = _clock();
+    bool waitsOnUser(Task task) => switch (user.role) {
+      UserRole.admin =>
+        task.status == TaskStatus.blocked || task.isOverdue(now),
+      UserRole.ceo =>
+        task.status == TaskStatus.finalReview ||
+            task.status == TaskStatus.done ||
+            task.status == TaskStatus.handover,
+      UserRole.projectManager =>
+        task.status == TaskStatus.internalReview ||
+            task.status == TaskStatus.clientReview ||
+            (task.assignedTo == user.id && _needsWork(task)),
+      UserRole.assignee => task.assignedTo == user.id && _needsWork(task),
+    };
+    return _tasks.where(waitsOnUser).toList(growable: false);
+  }
+
+  /// Open tasks due within the next 7 days (or already overdue).
+  List<Task> get upcoming {
+    final DateTime horizon = _clock().add(const Duration(days: 7));
+    return _tasks
+        .where(
+          (Task task) =>
+              task.status.isOpen &&
+              task.dueAt != null &&
+              task.dueAt!.isBefore(horizon),
+        )
+        .toList(growable: false);
+  }
 
   // --- Loading ---------------------------------------------------------------
 
@@ -48,92 +98,39 @@ class HomeController extends BaseController {
   ///
   /// Safe to call from `initState` and from pull-to-refresh.
   Future<void> load() async {
-    if (!isAdmin) {
-      _accounts = const <User>[];
-      notify();
+    final User? user = currentUser;
+    if (user == null) {
       return;
     }
+    setLoading(true);
+    clearError();
+    final List<Object> results = await Future.wait<Object>(<Future<Object>>[
+      _projectService.visibleProjects(user),
+      _taskService.visibleTasks(user),
+    ]);
+    final Result<List<Project>> projects = results[0] as Result<List<Project>>;
+    final Result<List<Task>> tasks = results[1] as Result<List<Task>>;
 
-    final List<User>? result = await runGuarded<List<User>>(
-      _userStore.getUsers,
-    );
-    if (result != null) {
-      _accounts = result;
-      notify();
+    _projects = projects.dataOrNull ?? _projects;
+    _tasks = tasks.dataOrNull ?? _tasks;
+    final String? error = projects.errorOrNull ?? tasks.errorOrNull;
+    if (error != null) {
+      setError(error);
     }
-  }
-
-  // --- Admin actions ---------------------------------------------------------
-
-  /// Admin-only: creates a new account with a hashed password.
-  Future<bool> createUser({
-    required String username,
-    required String password,
-    required UserRole role,
-  }) async {
-    if (!isAdmin) {
-      setError('Only administrators can create accounts.');
-      return false;
-    }
-
-    final String trimmedUsername = username.trim();
-    if (trimmedUsername.isEmpty || password.isEmpty) {
-      setError('A username and password are required.');
-      return false;
-    }
-
-    final bool? alreadyTaken = await runGuarded<bool>(
-      () => _userStore.usernameExists(trimmedUsername),
-    );
-    if (alreadyTaken == null) {
-      return false; // storage failure, errorMessage already set
-    }
-    if (alreadyTaken) {
-      setError('The username "$trimmedUsername" is already taken.');
-      return false;
-    }
-
-    final int? newId = await runGuarded<int>(
-      () => _userStore.insertUser(
-        User(
-          username: trimmedUsername,
-          password: PasswordHasher.hash(password),
-          role: role,
-        ),
-      ),
-    );
-    if (newId == null) {
-      return false;
-    }
-
-    await load();
-    return true;
-  }
-
-  /// Admin-only: deletes the account with [userId].
-  Future<bool> deleteUser(int userId) async {
-    if (!isAdmin) {
-      setError('Only administrators can delete accounts.');
-      return false;
-    }
-    if (isCurrentUser(userId)) {
-      setError('You cannot delete the account you are signed in with.');
-      return false;
-    }
-
-    final int? deleted = await runGuarded<int>(
-      () => _userStore.deleteUser(userId),
-    );
-    if (deleted == null) {
-      return false;
-    }
-
-    await load();
-    return true;
+    setLoading(false);
+    notify();
   }
 
   // --- Session ---------------------------------------------------------------
 
   /// Ends the session. The router guard navigates back to `/login`.
   Future<void> signOut() => authController.signOut();
+
+  static bool _needsWork(Task task) => const <TaskStatus>{
+    TaskStatus.todo,
+    TaskStatus.acknowledged,
+    TaskStatus.inProgress,
+    TaskStatus.blocked,
+    TaskStatus.workingWithSupport,
+  }.contains(task.status);
 }

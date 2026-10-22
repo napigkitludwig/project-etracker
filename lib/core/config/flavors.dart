@@ -92,11 +92,11 @@ class Flavors {
   static String _appNameFor(Environment env) {
     switch (env) {
       case Environment.dev:
-        return 'FluetPress (Dev)';
+        return 'eTracker (Dev)';
       case Environment.staging:
-        return 'FluetPress (Staging)';
+        return 'eTracker (Staging)';
       case Environment.prod:
-        return 'FluetPress';
+        return 'Project eTracker';
     }
   }
 

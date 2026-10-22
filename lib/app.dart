@@ -14,7 +14,9 @@ import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/services/auth_api_service.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/services/user_local_data_source.dart';
+import 'features/projects/services/project_service.dart';
 import 'features/settings/controllers/settings_controller.dart';
+import 'features/tasks/services/task_service.dart';
 import 'shared/widgets/offline_banner.dart';
 
 /// The app's object graph, assembled once at startup.
@@ -33,6 +35,8 @@ class AppDependencies {
     required this.apiClient,
     required this.connectivityService,
     required this.authService,
+    required this.projectService,
+    required this.taskService,
     required this.authController,
     required this.settingsController,
   });
@@ -42,6 +46,8 @@ class AppDependencies {
   final ApiClient apiClient;
   final ConnectivityService connectivityService;
   final AuthService authService;
+  final ProjectService projectService;
+  final TaskService taskService;
   final AuthController authController;
   final SettingsController settingsController;
 
@@ -64,6 +70,8 @@ class AppDependencies {
       localDataSource: UserLocalDataSource(databaseHelper: databaseHelper),
       secureStorage: secureStorage,
     );
+    final ProjectService projectService = ProjectService();
+    final TaskService taskService = TaskService(projectService: projectService);
 
     // 4. Controllers.
     final AuthController authController = AuthController(
@@ -92,6 +100,8 @@ class AppDependencies {
       apiClient: apiClient,
       connectivityService: connectivityService,
       authService: authService,
+      projectService: projectService,
+      taskService: taskService,
       authController: authController,
       settingsController: settingsController,
     );
@@ -142,6 +152,10 @@ class _FluetPressAppState extends State<FluetPressApp> {
           value: widget.dependencies.secureStorage,
         ),
         Provider<ApiClient>.value(value: widget.dependencies.apiClient),
+        Provider<ProjectService>.value(
+          value: widget.dependencies.projectService,
+        ),
+        Provider<TaskService>.value(value: widget.dependencies.taskService),
         ChangeNotifierProvider<ConnectivityService>.value(
           value: widget.dependencies.connectivityService,
         ),

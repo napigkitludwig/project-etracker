@@ -8,6 +8,7 @@ import '../../../core/utils/extensions.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/views/widgets/role_badge.dart';
+import '../../tasks/models/task_view_mode.dart';
 import '../controllers/settings_controller.dart';
 
 /// Settings screen.
@@ -51,6 +52,27 @@ class SettingsView extends StatelessWidget {
               selected: <ThemeMode>{settings.themeMode},
               onSelectionChanged: (Set<ThemeMode> selection) =>
                   settings.setThemeMode(selection.first),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _Section(
+            title: 'Task view',
+            child: SegmentedButton<TaskViewMode>(
+              segments: const <ButtonSegment<TaskViewMode>>[
+                ButtonSegment<TaskViewMode>(
+                  value: TaskViewMode.list,
+                  label: Text('List'),
+                  icon: Icon(Icons.view_agenda_outlined),
+                ),
+                ButtonSegment<TaskViewMode>(
+                  value: TaskViewMode.board,
+                  label: Text('Kanban board'),
+                  icon: Icon(Icons.view_kanban_outlined),
+                ),
+              ],
+              selected: <TaskViewMode>{settings.taskViewMode},
+              onSelectionChanged: (Set<TaskViewMode> selection) =>
+                  settings.setTaskViewMode(selection.first),
             ),
           ),
           const SizedBox(height: 16),

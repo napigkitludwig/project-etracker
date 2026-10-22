@@ -25,7 +25,7 @@ void main() {
 
     test('encodes the nested user through its own mapping', () {
       const AuthSession session = AuthSession(
-        user: User(id: 2, username: 'standard_user', role: UserRole.user),
+        user: User(id: 2, username: 'standard_user', role: UserRole.assignee),
         accessToken: 'access',
       );
 
@@ -35,7 +35,7 @@ void main() {
       final Map<String, dynamic> userJson =
           json['user'] as Map<String, dynamic>;
       expect(userJson['username'], 'standard_user');
-      expect(userJson['role'], 'User');
+      expect(userJson['role'], 'Assignee');
       // The hash is never part of an API payload.
       expect(userJson['password'], '');
     });

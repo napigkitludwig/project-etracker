@@ -35,7 +35,7 @@ abstract class User with _$User {
     /// Defaults to empty so API payloads may omit it.
     @Default('') String password,
 
-    /// Authorisation role, serialised as `'Admin'` / `'User'`.
+    /// Authorisation role, serialised as its `UserRole.dbValue`.
     @UserRoleConverter() required UserRole role,
   }) = _User;
 
@@ -57,7 +57,7 @@ abstract class User with _$User {
   /// Hashed password column (`TEXT NOT NULL`).
   static const String columnPassword = 'password';
 
-  /// Role column (`TEXT NOT NULL`, `'Admin'` or `'User'`).
+  /// Role column (`TEXT NOT NULL`, one of the `UserRole.dbValue`s).
   static const String columnRole = 'role';
 
   /// Whether this account is an administrator.
