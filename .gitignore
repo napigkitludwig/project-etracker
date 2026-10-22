@@ -1,54 +1,65 @@
-# Miscellaneous
+# ============================================================================
+#  Flutter app (.gitignore)
+#  Generated for a `flutter create` application (Android / iOS / web / desktop).
+#  NOTE: pubspec.lock and Podfile.lock are intentionally NOT ignored — they must
+#  be committed for reproducible builds of an application.
+# ============================================================================
+
+# --- Miscellaneous ---------------------------------------------------------
 *.class
-*.lock
 *.log
 *.pyc
 *.swp
+.DS_Store
+Thumbs.db
+.atom/
 .buildlog/
 .history
+.vscode/
 
+# --- IntelliJ / Android Studio --------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
 
+# --- Visual Studio Code ----------------------------------------------------
+.classpath
+.project
+.settings/
 
-# Flutter repo-specific
-/bin/cache/
-/bin/internal/bootstrap.bat
-/bin/internal/bootstrap.sh
-/bin/mingit/
-/dev/benchmarks/mega_gallery/
-/dev/bots/.recipe_deps
-/dev/bots/android_tools/
-/dev/devicelab/ABresults*.json
-/dev/docs/doc/
-/dev/docs/flutter.docs.zip
-/dev/docs/lib/
-/dev/docs/pubspec.yaml
-/dev/integration_tests/**/xcuserdata
-/dev/integration_tests/**/Pods
-/packages/flutter/coverage/
-version
-analysis_benchmark.json
+# --- Secrets / local environment ------------------------------------------
+# Never commit real credentials. Only the `*.example.json` files under
+# `config/` and a checked-in `.env.example` are meant to be tracked.
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
 
-# packages file containing multi-root paths
-.packages.generated
-
-# Flutter/Dart/Pub related
+# --- Flutter / Dart / Pub --------------------------------------------------
 **/doc/api/
+**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-**/generated_plugin_registrant.dart
-.packages
-.pub-preload-cache/
+.pub-cache/
 .pub/
 build/
+coverage/
 flutter_*.png
 linked_*.ds
 unlinked.ds
 unlinked_spec.ds
 
-# Android related
+# --- Symbolication / obfuscation ------------------------------------------
+app.*.symbols
+app.*.map.json
+
+# --- Android ---------------------------------------------------------------
 **/android/**/gradle-wrapper.jar
-.gradle/
+**/android/.gradle/
+**/android/.cxx/
 **/android/captures/
 **/android/gradlew
 **/android/gradlew.bat
@@ -56,8 +67,9 @@ unlinked_spec.ds
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+*.keystore
 
-# iOS/XCode related
+# --- iOS / Xcode -----------------------------------------------------------
 **/ios/**/*.mode1v3
 **/ios/**/*.mode2v3
 **/ios/**/*.moved-aside
@@ -74,7 +86,6 @@ unlinked_spec.ds
 **/ios/**/profile
 **/ios/**/xcuserdata
 **/ios/.generated/
-**/ios/Flutter/.last_build_id
 **/ios/Flutter/App.framework
 **/ios/Flutter/Flutter.framework
 **/ios/Flutter/Flutter.podspec
@@ -87,33 +98,38 @@ unlinked_spec.ds
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
-# macOS
+# --- macOS -----------------------------------------------------------------
 **/Flutter/ephemeral/
 **/Pods/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral
 **/xcuserdata/
 
-# Windows
+# --- Windows ---------------------------------------------------------------
 **/windows/flutter/generated_plugin_registrant.cc
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
+**/windows/**/*.suo
+**/windows/**/*.user
+**/windows/**/*.userosscache
+**/windows/**/*.sln.docstates
+**/windows/x64/
+**/windows/x86/
+**/windows/**/*.[Cc]ache
 
-# Linux
+# --- Linux -----------------------------------------------------------------
 **/linux/flutter/generated_plugin_registrant.cc
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
 
-# Coverage
-coverage/
+# --- Web / deployment ------------------------------------------------------
+# Vercel CLI project link metadata (contains project/org ids).
+.vercel/
 
-# Symbols
-app.*.symbols
-
-# Exceptions to above rules.
+# --- Exceptions to the rules above ----------------------------------------
 !**/ios/**/default.mode1v3
 !**/ios/**/default.mode2v3
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
-!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-!/dev/ci/**/Gemfile.lock
+!**/ios/**/.sconsign.dblite
+!**/windows/**/*.[Cc]ache/
