@@ -4,9 +4,11 @@ import 'app_colors.dart';
 
 /// Centralised theme builder.
 ///
-/// Both themes are generated from [AppBrand.seedColor] so the app stays visually
-/// consistent as new screens are added, and every widget reads component styles
-/// from here instead of hard-coding values.
+/// Both themes start from [AppBrand.seedColor] and then pin the IdeaHub
+/// palette (SRD §7) onto the scheme: near-black canvas, charcoal cards, white
+/// headings with cool-gray body copy, off-white call-to-action buttons and
+/// steel-blue accents. Every widget reads component styles from here instead of
+/// hard-coding values.
 class AppTheme {
   const AppTheme._();
 
@@ -23,14 +25,39 @@ class AppTheme {
     required AppBrand brand,
     required Brightness brightness,
   }) {
-    final ColorScheme scheme = ColorScheme.fromSeed(
-      seedColor: brand.seedColor,
-      brightness: brightness,
-    );
+    final ColorScheme scheme = _scheme(brand, brightness);
 
     return ThemeData(
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: scheme.surfaceContainerLowest,
+        indicatorColor: scheme.secondaryContainer,
+        selectedIconTheme: IconThemeData(color: scheme.onSecondaryContainer),
+        unselectedIconTheme: IconThemeData(color: scheme.onSurfaceVariant),
+        selectedLabelTextStyle: TextStyle(
+          color: scheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelTextStyle: TextStyle(color: scheme.onSurfaceVariant),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: scheme.surfaceContainerLowest,
+        indicatorColor: scheme.secondaryContainer,
+        surfaceTintColor: Colors.transparent,
+      ),
+      chipTheme: ChipThemeData(
+        side: BorderSide(color: scheme.outlineVariant),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.primary,
+        foregroundColor: scheme.onPrimary,
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: scheme.surfaceContainerLow,
+        showDragHandle: true,
+      ),
       extensions: <ThemeExtension<dynamic>>[
         brightness == Brightness.dark
             ? AppSemanticColors.dark
@@ -67,7 +94,7 @@ class AppTheme {
         border: _inputBorder(BorderSide.none),
         enabledBorder: _inputBorder(BorderSide.none),
         focusedBorder: _inputBorder(
-          BorderSide(color: scheme.primary, width: 1.5),
+          BorderSide(color: scheme.tertiary, width: 1.5),
         ),
         errorBorder: _inputBorder(BorderSide(color: scheme.error, width: 1.5)),
         focusedErrorBorder: _inputBorder(
@@ -107,7 +134,7 @@ class AppTheme {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: scheme.primary),
+        style: TextButton.styleFrom(foregroundColor: scheme.tertiary),
       ),
       listTileTheme: ListTileThemeData(iconColor: scheme.onSurfaceVariant),
       dialogTheme: DialogThemeData(
@@ -118,7 +145,74 @@ class AppTheme {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dividerTheme: DividerThemeData(color: scheme.outlineVariant),
-      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.tertiary,
+        linearTrackColor: scheme.surfaceContainerHighest,
+      ),
+    );
+  }
+
+  /// The seeded scheme with the IdeaHub palette pinned on top.
+  ///
+  /// `primary` is the off-white (dark) / near-black (light) call-to-action
+  /// colour; `secondary` and `tertiary` carry the steel-blue accents used for
+  /// highlights, links, focus and progress.
+  static ColorScheme _scheme(AppBrand brand, Brightness brightness) {
+    final ColorScheme seeded = ColorScheme.fromSeed(
+      seedColor: brand.seedColor,
+      brightness: brightness,
+    );
+
+    if (brightness == Brightness.dark) {
+      return seeded.copyWith(
+        surface: AppColors.black,
+        onSurface: AppColors.white,
+        onSurfaceVariant: AppColors.slate,
+        surfaceContainerLowest: AppColors.black,
+        surfaceContainerLow: AppColors.charcoal,
+        surfaceContainer: AppColors.charcoal,
+        surfaceContainerHigh: AppColors.charcoalAlt,
+        surfaceContainerHighest: const Color(0xFF262A30),
+        primary: AppColors.offWhite,
+        onPrimary: AppColors.black,
+        primaryContainer: const Color(0xFF1F2A36),
+        onPrimaryContainer: const Color(0xFFCFE0F2),
+        secondary: AppColors.steelBlue,
+        onSecondary: AppColors.black,
+        secondaryContainer: const Color(0xFF22303C),
+        onSecondaryContainer: const Color(0xFFD6E4F0),
+        tertiary: AppColors.accentBlue,
+        onTertiary: AppColors.white,
+        outline: const Color(0xFF3A3F47),
+        outlineVariant: const Color(0xFF2A2E35),
+        inverseSurface: AppColors.offWhite,
+        onInverseSurface: AppColors.blackAlt,
+      );
+    }
+
+    return seeded.copyWith(
+      surface: AppColors.offWhite,
+      onSurface: AppColors.blackAlt,
+      onSurfaceVariant: const Color(0xFF5B626D),
+      surfaceContainerLowest: AppColors.white,
+      surfaceContainerLow: AppColors.white,
+      surfaceContainer: const Color(0xFFEDEFF2),
+      surfaceContainerHigh: const Color(0xFFE6E9ED),
+      surfaceContainerHighest: const Color(0xFFE6E9ED),
+      primary: AppColors.blackAlt,
+      onPrimary: AppColors.white,
+      primaryContainer: const Color(0xFFDCE7F2),
+      onPrimaryContainer: const Color(0xFF14283A),
+      secondary: const Color(0xFF4A6F8C),
+      onSecondary: AppColors.white,
+      secondaryContainer: const Color(0xFFDCE7F2),
+      onSecondaryContainer: const Color(0xFF14283A),
+      tertiary: const Color(0xFF2F6FBF),
+      onTertiary: AppColors.white,
+      outline: const Color(0xFFC3C8CF),
+      outlineVariant: const Color(0xFFDDE1E6),
+      inverseSurface: AppColors.blackAlt,
+      onInverseSurface: AppColors.offWhite,
     );
   }
 

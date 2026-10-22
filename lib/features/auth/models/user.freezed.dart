@@ -22,7 +22,7 @@ mixin _$User {
  String get username;/// SHA-256 digest of the user's password — plain text is never persisted.
 /// See `PasswordHasher` for the (development-grade) hashing used here.
 /// Defaults to empty so API payloads may omit it.
- String get password;/// Authorisation role, serialised as `'Admin'` / `'User'`.
+ String get password;/// Authorisation role, serialised as its `UserRole.dbValue`.
 @UserRoleConverter() UserRole get role;
 /// Create a copy of User
 /// with the given fields replaced by the non-null parameter values.
@@ -237,7 +237,7 @@ class _User extends User {
 /// See `PasswordHasher` for the (development-grade) hashing used here.
 /// Defaults to empty so API payloads may omit it.
 @override@JsonKey() final  String password;
-/// Authorisation role, serialised as `'Admin'` / `'User'`.
+/// Authorisation role, serialised as its `UserRole.dbValue`.
 @override@UserRoleConverter() final  UserRole role;
 
 /// Create a copy of User

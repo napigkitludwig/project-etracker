@@ -111,7 +111,7 @@ class AuthService {
 
   // --- Registration ----------------------------------------------------------
 
-  /// Creates an account (`User` role) and signs it in.
+  /// Creates an account (`Assignee` role) and signs it in.
   Future<Result<AuthSession>> register({
     required String username,
     required String password,
@@ -154,7 +154,7 @@ class AuthService {
         User(
           username: username,
           password: PasswordHasher.hash(password),
-          role: UserRole.user,
+          role: UserRole.assignee,
         ),
       );
 

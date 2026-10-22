@@ -5,8 +5,10 @@ import 'package:flutter/material.dart' show ThemeMode;
 import '../../../core/controllers/base_controller.dart';
 import '../../../core/storage/database_helper.dart';
 import '../../../core/utils/app_constants.dart';
+import '../../tasks/models/task_view_mode.dart';
 
-/// Owns app-level preferences (currently the theme mode).
+/// Owns app-level preferences: the theme mode and the task view mode
+/// (list or Kanban board).
 ///
 /// Preferences are *not* secrets, so they live in the SQLite `app_settings`
 /// table rather than in encrypted storage — cheaper reads, and they survive
@@ -17,10 +19,16 @@ class SettingsController extends BaseController {
 
   final DatabaseHelper _databaseHelper;
 
-  ThemeMode _themeMode = ThemeMode.system;
+  // Dark by default: the IdeaHub brand is dark-mode native (SRD §7).
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  TaskViewMode _taskViewMode = TaskViewMode.list;
 
   /// The active theme mode.
   ThemeMode get themeMode => _themeMode;
+
+  /// How task collections are presented.
+  TaskViewMode get taskViewMode => _taskViewMode;
 
   /// Loads the persisted preferences. Called once during bootstrapping.
   Future<void> load() async {
@@ -32,7 +40,29 @@ class SettingsController extends BaseController {
     if (restored != null) {
       _themeMode = restored;
     }
+
+    final String? rawViewMode = await runGuarded<String?>(
+      () => _databaseHelper.getSetting(AppConstants.settingTaskViewMode),
+    );
+    _taskViewMode = TaskViewMode.parse(rawViewMode);
     notify();
+  }
+
+  /// Updates and persists the task view mode.
+  Future<void> setTaskViewMode(TaskViewMode mode) async {
+    if (mode == _taskViewMode) {
+      return;
+    }
+    _taskViewMode = mode;
+    notify();
+
+    await runGuarded<void>(
+      () => _databaseHelper.setSetting(
+        AppConstants.settingTaskViewMode,
+        mode.storageValue,
+      ),
+      errorMessage: 'Your preference could not be saved.',
+    );
   }
 
   /// Updates and persists the theme mode immediately (so the UI flips at once,

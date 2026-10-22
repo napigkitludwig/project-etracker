@@ -175,7 +175,7 @@ void main() {
       expect(result, isA<Success<AuthSession>>());
       final AuthSession session = (result as Success<AuthSession>).data;
       expect(session.user.username, 'newcomer');
-      expect(session.user.role, UserRole.user);
+      expect(session.user.role, UserRole.assignee);
       expect(await storage.readSessionUserId(), session.user.id);
 
       // The password is stored hashed, never in the clear.

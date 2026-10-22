@@ -23,6 +23,48 @@ extension StringX on String {
       .join();
 }
 
+/// Compact, locale-neutral date formatting (no `intl` dependency needed).
+extension DateTimeX on DateTime {
+  static const List<String> _months = <String>[
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', //
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// `Oct 22, 2026`.
+  String get shortDate => '${_months[month - 1]} $day, $year';
+
+  /// `Oct 22` — the year is dropped when it is the current one.
+  String get compactDate =>
+      year == DateTime.now().year ? '${_months[month - 1]} $day' : shortDate;
+
+  /// `09:05`.
+  String get shortTime =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  /// `Oct 22, 2026 · 09:05`.
+  String get shortDateTime => '$shortDate · $shortTime';
+
+  /// Midnight of the same calendar day.
+  DateTime get dateOnly => DateTime(year, month, day);
+
+  /// Whether [other] falls on the same calendar day.
+  bool isSameDay(DateTime other) =>
+      year == other.year && month == other.month && day == other.day;
+}
+
+/// Formatting for minute counts (time blocks and tracked durations).
+extension MinutesX on int {
+  /// `95` → `1h 35m`, `45` → `45m`, `120` → `2h`.
+  String get asDuration {
+    final int hours = this ~/ 60;
+    final int minutes = this % 60;
+    if (hours == 0) {
+      return '${minutes}m';
+    }
+    return minutes == 0 ? '${hours}h' : '${hours}h ${minutes}m';
+  }
+}
+
 /// Widget-tree shortcuts for the shared dialogs/snackbars.
 extension BuildContextX on BuildContext {
   /// Shows a floating snack bar carrying [message].

@@ -149,31 +149,50 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 3.4,
             children: <Widget>[
-              Expanded(
-                child: OutlinedButton(
+              for (final (String label, String username, String password)
+                  in <(String, String, String)>[
+                    (
+                      'Admin',
+                      AppConstants.seedAdminUsername,
+                      AppConstants.seedAdminPassword,
+                    ),
+                    (
+                      'CEO',
+                      AppConstants.seedCeoUsername,
+                      AppConstants.seedCeoPassword,
+                    ),
+                    (
+                      'Project Manager',
+                      AppConstants.seedManagerUsername,
+                      AppConstants.seedManagerPassword,
+                    ),
+                    (
+                      'Assignee',
+                      AppConstants.seedUserUsername,
+                      AppConstants.seedUserPassword,
+                    ),
+                  ])
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   onPressed: controller.isLoading
                       ? null
-                      : () => _useDemoCredentials(
-                          AppConstants.seedAdminUsername,
-                          AppConstants.seedAdminPassword,
-                        ),
-                  child: const Text('Admin'),
+                      : () => _useDemoCredentials(username, password),
+                  child: Text(label, overflow: TextOverflow.ellipsis),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: controller.isLoading
-                      ? null
-                      : () => _useDemoCredentials(
-                          AppConstants.seedUserUsername,
-                          AppConstants.seedUserPassword,
-                        ),
-                  child: const Text('User'),
-                ),
-              ),
             ],
           ),
           if (!EnvConfig.instance.isProd) ...<Widget>[

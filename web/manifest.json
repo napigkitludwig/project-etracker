@@ -1,6 +1,6 @@
 {
-    "name": "fluetpress",
-    "short_name": "fluetpress",
+    "name": "Project eTracker",
+    "short_name": "eTracker",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
